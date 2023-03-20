@@ -8,8 +8,40 @@ provider "aws" {
 
 resource "aws_s3_bucket" "public_read" {
   bucket = "my-tf-log-bucket"
-  acl = "public-read"
+  acl = "private"
 }
+
+resource "aws_s3_bucket_versioning" "public_read" {
+  bucket = aws_s3_bucket.public_read.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+
+resource "aws_s3_bucket" "public_read_log_bucket" {
+  bucket = "public_read-log-bucket"
+}
+
+resource "aws_s3_bucket_logging" "public_read" {
+  bucket = aws_s3_bucket.public_read.id
+
+  target_bucket = aws_s3_bucket.public_read_log_bucket.id
+  target_prefix = "log/"
+}
+
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "public_read" {
+  bucket = aws_s3_bucket.public_read.bucket
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
 resource "aws_s3_bucket" "public_read_write" {
   acl = "public-read-write"
 
